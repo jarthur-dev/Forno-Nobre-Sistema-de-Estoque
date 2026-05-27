@@ -22,7 +22,7 @@ class Insumo(db.Model):
     nome = db.Column(db.String(100))
     quantidade_atual = db.Column(db.Float, default=0.0)
     quantidade_minima = db.Column(db.Float, default=0.0)
-    unidade = db.Column(db.String(20)) # Padronizado para 'unidade'
+    unidade = db.Column(db.String(20)) 
     categoria = db.Column(db.String(50))
 
 class Usuario(db.Model):
@@ -54,7 +54,7 @@ class Historico(db.Model):
     produto_nome = db.Column(db.String(100))
     tipo = db.Column(db.String(20))
     quantidade = db.Column(db.Float)
-    unidade = db.Column(db.String(10)) # kg, un, L
+    unidade = db.Column(db.String(10)) 
     saldo_final = db.Column(db.Float)
     observacao = db.Column(db.String(200))
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
@@ -123,6 +123,14 @@ def index():
     alertas = [i for i in insumos if (i.quantidade_atual or 0) < (i.quantidade_minima or 0)]
     return render_template('index.html', insumos=insumos, usuario=user, alertas=alertas)
 
+@app.route('/cadastro_produto')
+def cadastro_produto():
+    if 'user_id' not in session: return redirect(url_for('login'))
+    user = Usuario.query.get(session['user_id'])
+    insumos = Insumo.query.all()
+    alertas = [i for i in insumos if (i.quantidade_atual or 0) < (i.quantidade_minima or 0)]
+    return render_template('cadastro.html', usuario=user, alertas=alertas)
+
 @app.route('/adicionar_insumo', methods=['POST'])
 def adicionar_insumo():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -131,16 +139,16 @@ def adicionar_insumo():
     categoria = request.form.get('categoria')
     unidade = request.form.get('unidade')
     qtd_str = request.form.get('quantidade').replace(',', '.')
+    
     qtd = float(qtd_str)
     minimo = float(request.form.get('minimo'))
     user = Usuario.query.get(session['user_id'])
 
     if Insumo.query.filter_by(nome=nome).first():
         flash("⚠️ Este insumo já está cadastrado!", "warning")
-        return redirect(url_for('index'))
+        return redirect(url_for('cadastro_produto'))
 
     try:
-        # 1. Cria o novo Insumo (Usando unidade corrigido)
         novo_insumo = Insumo(
             nome=nome, 
             categoria=categoria, 
@@ -150,7 +158,6 @@ def adicionar_insumo():
         )
         db.session.add(novo_insumo)
 
-        # 2. Registra no Histórico
         db.session.add(Historico(
             produto_nome=nome, 
             quantidade=qtd, 
@@ -169,6 +176,34 @@ def adicionar_insumo():
         db.session.rollback()
         flash(f"❌ Erro ao cadastrar: {str(e)}", "danger")
 
+    # Alterado para manter o usuário na página de cadastro
+    return redirect(url_for('cadastro_produto'))
+
+@app.route('/editar_insumo/<int:id>', methods=['POST'])
+def editar_insumo(id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    insumo = Insumo.query.get_or_404(id)
+    
+    # Captura os dados vindos do formulário do modal
+    novo_nome = request.form.get('nome')
+    nova_quantidade = request.form.get('quantidade')
+    novo_minimo = request.form.get('minimo')
+    nova_unidade = request.form.get('unidade')
+    
+    # Valida e atualiza os dados no banco
+    if novo_nome:
+        insumo.nome = novo_nome
+    if nova_quantidade is not None:
+        insumo.quantidade_atual = float(nova_quantidade)
+    if novo_minimo is not None:
+        insumo.quantidade_minima = float(novo_minimo)
+    if nova_unidade:
+        insumo.unidade = nova_unidade  # Alinha com a coluna 'unidade' do banco de dados
+
+    db.session.commit()
+    flash('Insumo atualizado com sucesso!', 'success')
     return redirect(url_for('index'))
 
 @app.route('/excluir_insumo/<int:id>', methods=['GET', 'POST'])
@@ -198,7 +233,7 @@ def movimentar(id):
     log = Historico(
         produto_nome=item.nome, 
         quantidade=qtd, 
-        unidade=item.unidade, # Pega a unidade do item cadastrado
+        unidade=item.unidade, 
         tipo=tipo, 
         usuario_nome=user.username, 
         usuario_id=user.id, 
@@ -234,7 +269,7 @@ def perfil():
             Historico.query.filter_by(usuario_id=usuario.id).update({Historico.usuario_nome: usuario.username})
             session['user_nome'] = usuario.username
             db.session.commit()
-            flash('✅ Perfil atualizado!', 'success')
+            flash('✅ Perfil updated!', 'success')
         else:
             foto_filename = None
             if 'foto' in request.files:
@@ -295,7 +330,6 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         
-        # Correção de dados nulos
         insumos_com_erro = Insumo.query.filter((Insumo.quantidade_atual == None) | (Insumo.quantidade_minima == None)).all()
         for i in insumos_com_erro:
             if i.quantidade_atual is None: i.quantidade_atual = 0.0

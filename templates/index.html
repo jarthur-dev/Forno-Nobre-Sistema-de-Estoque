@@ -6,7 +6,65 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Inventário - Forno Nobre</title>
+    <style>
+        /* --- ESTRUTURA DE LAYOUT FIXO PROFISSIONAL --- */
+        #wrapper {
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        #sidebar-wrapper {
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            flex-shrink: 0;
+        }
+
+        #page-content-wrapper {
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar-fixa-topo {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .container-filtro-custom {
+            border-radius: 20px;
+            transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .container-filtro-custom:focus-within {
+            background-color: #fff !important;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        /* Estilo sutil para os cards do dashboard */
+        .card-dashboard {
+            border-radius: 12px;
+            transition: transform 0.2s ease;
+        }
+        .card-dashboard:hover {
+            transform: translateY(-3px);
+        }
+
+        /* Efeito de zoom/aumento ao passar o mouse nos botões da tabela */
+        .btn-acao-tabela {
+            transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
+            display: inline-block;
+        }
+        .btn-acao-tabela:hover {
+            transform: scale(1.25); /* Aumenta o tamanho em 25% */
+        }
+    </style>
 </head>
 <body class="bg-light">
 
@@ -16,6 +74,7 @@
                 <div class="logo-sidebar me-2">
                     <img src="/static/img/logo.png" alt="Logo">
                 </div>
+       
                 <span class="fs-5 fw-bold text-white"></span>
             </div>
             
@@ -23,23 +82,26 @@
                 <a href="/" class="list-group-item list-group-item-action bg-transparent active-nav border-0 py-3">
                     <i class="fas fa-box me-3"></i> Estoque Atual
                 </a>
-            
 
+                <a href="/cadastro_produto" class="list-group-item list-group-item-action bg-transparent text-white border-0 py-3 op-hover">
+                    <i class="fas fa-plus-circle me-3"></i> Cadastrar Produto
+                </a>
+            
                 {% if usuario.nivel == 'admin' %}
                 <a href="/historico" class="list-group-item list-group-item-action bg-transparent text-white border-0 py-3 op-hover">
                     <i class="fas fa-history me-3"></i> Relatórios
                 </a>
                 {% endif %}
-                
-<a href="/perfil" class="list-group-item list-group-item-action bg-transparent text-white border-0 py-3 op-hover">
-    <i class="fas fa-user me-3"></i> Meu Perfil
     
-    {% if contagem_pendentes > 0 %}
-    <span class="badge rounded-pill bg-danger float-end mt-1">
-        {{ contagem_pendentes }}
-    </span>
-    {% endif %}
-</a>
+                <a href="/perfil" class="list-group-item list-group-item-action bg-transparent text-white border-0 py-3 op-hover">
+                    <i class="fas fa-user me-3"></i> Meu Perfil
+                    
+                    {% if contagem_pendentes > 0 %}
+                    <span class="badge rounded-pill bg-danger float-end mt-1">
+                        {{ contagem_pendentes }}
+                    </span>
+                    {% endif %}
+                </a>
             </div>
 
             <div class="p-3">
@@ -51,11 +113,23 @@
 
         <div id="page-content-wrapper" class="w-100">
             
-            <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 shadow-sm mb-4">
+            <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 shadow-sm mb-4 navbar-fixa-topo">
                 <div class="container-fluid">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-search text-muted me-3"></i>
-                        <input type="text" id="inputBusca" class="form-control border-0 bg-light" placeholder="Pesquisar produto..." style="width: 300px; border-radius: 20px;">
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-search text-muted me-3"></i>
+                            <input type="text" id="inputBusca" class="form-control border-0 bg-light" placeholder="Pesquisar produto..." style="width: 250px; border-radius: 20px;">
+                        </div>
+                        
+                        <div class="d-flex align-items-center bg-light px-3 container-filtro-custom" style="height: 38px;">
+                            <i class="fas fa-sort-amount-down text-muted me-2"></i>
+                            <select id="selectOrdenacao" class="form-select border-0 bg-transparent shadow-none" style="width: 180px; font-size: 0.9rem; cursor: pointer; padding-top: 0; padding-bottom: 0;">
+                                <option value="recentes">Mais Recentes</option>
+                                <option value="az">Ordem Alfabética (A-Z)</option>
+                                <option value="alto">Maior Estoque</option>
+                                <option value="baixo">Menor Estoque</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="d-flex align-items-center">
@@ -81,7 +155,50 @@
                 </div>
             </nav>
 
-            <div class="container-fluid px-4">
+            <div class="container-fluid px-4 mb-3">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="card card-dashboard border-0 shadow-sm bg-white p-3 d-flex flex-row align-items-center justify-content-between">
+                            <div>
+                                <h6 class="text-muted small fw-bold mb-1">TOTAL DE INSUMOS</h6>
+                                <h3 class="fw-bold text-dark m-0">{{ insumos|length }}</h3>
+                            </div>
+                            <div class="bg-primary-subtle text-primary p-3 rounded-circle"><i class="fas fa-boxes fs-4"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card card-dashboard border-0 shadow-sm bg-white p-3 d-flex flex-row align-items-center justify-content-between">
+                            <div>
+                                <h6 class="text-muted small fw-bold mb-1">ALERTAS CRÍTICOS</h6>
+                                <h3 class="fw-bold text-danger m-0">{{ alertas|length }}</h3>
+                            </div>
+                            <div class="bg-danger-subtle text-danger p-3 rounded-circle"><i class="fas fa-exclamation-triangle fs-4"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card card-dashboard border-0 shadow-sm bg-white p-3 d-flex flex-row align-items-center justify-content-between">
+                            <div>
+                                <h6 class="text-muted small fw-bold mb-1">PRODUTOS EM DIA</h6>
+                                <h3 class="fw-bold text-success m-0">{{ (insumos|length) - (alertas|length) }}</h3>
+                            </div>
+                            <div class="bg-success-subtle text-success p-3 rounded-circle"><i class="fas fa-check-circle fs-4"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
+                            <h6 class="fw-bold text-dark mb-3"><i class="fas fa-chart-bar text-primary me-2"></i>Visão Geral do Volume de Estoque</h6>
+                            <div style="position: relative; height: 220px; width: 100%;">
+                                <canvas id="chartEstoque"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container-fluid px-4 flex-grow-1 mb-4">
                 {% with messages = get_flashed_messages(with_categories=true) %}
                   {% if messages %}
                     {% for category, message in messages %}
@@ -95,47 +212,10 @@
                 {% endwith %}
 
                 <div class="row">
-                    <div class="col-xl-4 col-lg-5">
-                        <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
-                            <div class="card-body p-4">
-                                <h5 class="card-title fw-bold mb-3 d-flex align-items-center">
-                                    <i class="fas fa-plus-circle text-success me-2"></i> Novo Produto
-                                </h5>
-                                <form action="/adicionar_insumo" method="POST">
-                                    <div class="mb-3">
-                                        <label class="form-label text-muted small fw-bold">NOME DO ITEM</label>
-                                        <input type="text" name="nome" class="form-control bg-light border-0" placeholder="Ex: Bolo de Chocolate" required>
-                                    </div>
-                                    <div class="row g-2 mb-3">
-                                        <div class="col-6">
-                                            <label class="form-label text-muted small fw-bold">QTD INICIAL</label>
-                                            <input type="number" step="0.1" name="quantidade" class="form-control bg-light border-0" required>
-                                        </div>
-                                        <div class="col-6">
-                                            <label class="form-label text-muted small fw-bold">QTD MÍNIMA</label>
-                                            <input type="number" step="0.1" name="minimo" class="form-control bg-light border-0" required>
-                                        </div>
-                                    </div>
-                                    <div class="mb-4">
-                                        <label class="form-label text-muted small fw-bold">UNIDADE DE MEDIDA</label>
-                                        <select name="unidade" class="form-select bg-light border-0">
-                                            <option value="kg">Quilos (kg)</option>
-                                            <option value="un">Unidades (un)</option>
-                                            <option value="lt">Litros (lt)</option>
-                                        </select>
-                                    </div>
-                                    <button type="submit" class="btn btn-success w-100 fw-bold py-2" style="border-radius: 10px;">
-                                        SALVAR NO ESTOQUE
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-xl-8 col-lg-7">
+                    <div class="col-12">
                         <div class="card border-0 shadow-sm" style="border-radius: 15px;">
                             <div class="card-header bg-white border-0 py-4 px-4">
-                                <h5 class="m-0 fw-bold text-dark">Gestão de Inventário</h5>
+                                <h5 class="m-0 fw-bold text-dark">Lista de Produtos Registrados</h5>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle mb-0">
@@ -147,9 +227,9 @@
                                             <th class="border-0 py-3 text-muted small fw-bold text-center">AÇÕES</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="tabelaInsumos">
                                         {% for item in insumos %}
-                                        <tr class="item-row">
+                                        <tr class="item-row" data-id="{{ item.id }}" data-nome="{{ item.nome }}" data-qtd="{{ item.quantidade_atual }}">
                                             <td class="px-4">
                                                 <div class="fw-bold text-dark">{{ item.nome }}</div>
                                                 <small class="text-muted">Mínimo: {{ item.quantidade_minima }} {{ item.unidade_medida }}</small>
@@ -170,11 +250,15 @@
                                                 </form>
                                             </td>
                                             <td class="text-center">
-                                                <form action="{{ url_for('excluir_insumo', id=item.id) }}" method="POST" style="display:inline;">
-                                                    <button type="submit" class="btn btn-link text-danger p-0" onclick="return confirm('Excluir {{ item.nome }}?')">
+                                                <div class="d-flex justify-content-center gap-2">
+                                                    <button type="button" class="btn btn-link btn-acao-tabela text-secondary p-0" data-bs-toggle="modal" data-bs-target="#modalEditar{{ item.id }}" title="Editar Insumo">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    
+                                                    <button type="button" class="btn btn-link btn-excluir btn-acao-tabela text-danger p-0" onclick="confirmarExclusao('{{ item.id }}', '{{ item.nome }}')" title="Excluir Insumo">
                                                         <i class="fas fa-trash-alt"></i>
                                                     </button>
-                                                </form>
+                                                </div>
                                             </td>
                                         </tr>
                                         {% endfor %}
@@ -186,6 +270,12 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div id="dados-grafico-valores" style="display: none;">
+        {% for item in insumos %}
+            <span class="grafico-item" data-label="{{ item.nome }}" data-valor="{{ item.quantidade_atual }}"></span>
+        {% endfor %}
     </div>
 
     <div class="modal fade" id="modalAlertas" tabindex="-1" aria-hidden="true">
@@ -222,15 +312,148 @@
         </div>
     </div>
 
+    {% for item in insumos %}
+    <div class="modal fade" id="modalEditar{{ item.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+                <div class="modal-header bg-dark text-white border-0 py-3" style="border-top-left-radius: 15px; border-top-right-radius: 15px;">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-edit text-success me-2"></i>Editar Insumo</h5>
+                    <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/editar_insumo/{{ item.id }}" method="POST">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">NOME DO ITEM</label>
+                            <input type="text" name="nome" class="form-control bg-light border-0 py-2" value="{{ item.nome }}" required style="border-radius: 10px;">
+                        </div>
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="form-label text-muted small fw-bold">QUANTIDADE ATUAL</label>
+                                <input type="number" step="0.1" name="quantidade" class="form-control bg-light border-0 py-2" value="{{ item.quantidade_atual }}" required style="border-radius: 10px;">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-muted small fw-bold">ESTOQUE MÍNIMO</label>
+                                <input type="number" step="0.1" name="minimo" class="form-control bg-light border-0 py-2" value="{{ item.quantidade_minima }}" required style="border-radius: 10px;">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <label class="form-label text-muted small fw-bold">UNIDADE DE MEDIDA</label>
+                            <select name="unidade" class="form-select bg-light border-0 py-2" style="border-radius: 10px;">
+                                <option value="kg" {% if item.unidade_medida == 'kg' %}selected{% endif %}>Quilos (kg)</option>
+                                <option value="un" {% if item.unidade_medida == 'un' %}selected{% endif %}>Unidades (un)</option>
+                                <option value="lt" {% if item.unidade_medida == 'lt' %}selected{% endif %}>Litros (lt)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-3 bg-light" style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
+                        <button type="button" class="btn btn-light fw-bold py-2 px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+                        <button type="submit" class="btn btn-success fw-bold py-2 px-4 shadow-sm" style="border-radius: 10px;">
+                            <i class="fas fa-save me-1"></i>Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Montagem Dinâmica do Gráfico com dados do Flask
+        const elementosGrafico = document.querySelectorAll('.grafico-item');
+        const nomesProdutos = [];
+        const quantidadesProdutos = [];
+
+        elementosGrafico.forEach(el => {
+            nomesProdutos.push(el.getAttribute('data-label'));
+            quantidadesProdutos.push(parseFloat(el.getAttribute('data-valor')) || 0);
+        });
+        const ctx = document.getElementById('chartEstoque').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: nomesProdutos,
+                datasets: [{
+                    label: 'Quantidade em Estoque',
+                    data: quantidadesProdutos,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { display: false } }
+                }
+            }
+        });
+
+        // Filtro de pesquisa por texto
         document.getElementById('inputBusca').addEventListener('keyup', function() {
             let busca = this.value.toLowerCase();
             document.querySelectorAll('.item-row').forEach(linha => {
-                let nome = linha.querySelector('.fw-bold').textContent.toLowerCase();
+                let nome = Server = linha.getAttribute('data-nome').toLowerCase();
                 linha.style.display = nome.includes(busca) ? '' : 'none';
             });
         });
+
+        // Mecanismo de Ordenação
+        document.getElementById('selectOrdenacao').addEventListener('change', function() {
+            const filtro = this.value;
+            const tbody = document.getElementById('tabelaInsumos');
+            const linhas = Array.from(tbody.querySelectorAll('.item-row'));
+
+            linhas.sort((a, b) => {
+                if (filtro === 'az') {
+                    return a.getAttribute('data-nome').localeCompare(b.getAttribute('data-nome'));
+                } else if (filtro === 'alto') {
+                    return parseFloat(b.getAttribute('data-qtd')) - parseFloat(a.getAttribute('data-qtd'));
+                } else if (filtro === 'baixo') {
+                    return parseFloat(a.getAttribute('data-qtd')) - parseFloat(b.getAttribute('data-qtd'));
+                } else if (filtro === 'recentes') {
+                    return parseInt(b.getAttribute('data-id')) - parseInt(a.getAttribute('data-id'));
+                }
+                return 0;
+            });
+
+            linhas.forEach(linha => tbody.appendChild(linha));
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('selectOrdenacao').dispatchEvent(new Event('change'));
+        });
+
+        // SweetAlert2 para Exclusão
+        function confirmarExclusao(id, nome) {
+            Swal.fire({
+                title: 'Tem certeza?',
+                text: `Você deseja mesmo excluir "${nome}" do estoque?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sim, excluir!',
+                cancelButtonText: 'Cancelar',
+                borderRadius: '15px',
+                customClass: { popup: 'border-0 shadow-lg' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/excluir_insumo/${id}`;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
     </script>
 </body>
 </html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Cadastrar Produto - Forno Nobre</title>
+    <style>
+        /* --- ESTRUTURA DE LAYOUT FIXO PADRONIZADO (ANTI-QUEBRA) --- */
+        #wrapper {
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        #sidebar-wrapper {
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            flex-shrink: 0;
+        }
+
+        #page-content-wrapper {
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar-fixa-topo {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        /* Customização para os inputs manterem o foco sutil e profissional */
+        .form-control:focus, .form-select:focus {
+            background-color: #fff !important;
+            border-color: #198754 !important;
+            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15) !important;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <div class="d-flex" id="wrapper">
+        <div id="sidebar-wrapper">
+            <div class="p-4 border-bottom border-secondary d-flex align-items-center">
+                <div class="logo-sidebar me-2">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
+                </div>
+                <span class="fs-5 fw-bold text-white"></span>
+            </div>
+            
+            <div class="list-group list-group-flush flex-grow-1 mt-3">
+                <a href="/" class="list-group-item list-group-item-action bg-transparent text-white border-0 py-3 op-hover">
+                    <i class="fas fa-box me-3"></i> Estoque Atual
+                </a>
+
+                <a href="/cadastro_produto" class="list-group-item list-group-item-action bg-transparent active-nav border-0 py-3">
+                    <i class="fas fa-plus-circle me-3"></i> Cadastrar Produto
+                </a>
+            
+                {% if usuario.nivel == 'admin' %}
+                <a href="/historico" class="list-group-item list-group-item-action bg-transparent text-white border-0 py-3 op-hover">
+                    <i class="fas fa-history me-3"></i> Relatórios
+                </a>
+                {% endif %}
+                
+                <a href="/perfil" class="list-group-item list-group-item-action bg-transparent text-white border-0 py-3 op-hover">
+                    <i class="fas fa-user me-3"></i> Meu Perfil
+                    
+                    {% if contagem_pendentes > 0 %}
+                    <span class="badge rounded-pill bg-danger float-end mt-1">
+                        {{ contagem_pendentes }}
+                    </span>
+                    {% endif %}
+                </a>
+            </div>
+
+            <div class="p-3">
+                <a href="/logout" class="btn btn-outline-danger w-100 btn-sm">
+                    <i class="fas fa-sign-out-alt me-2"></i> Sair
+                </a>
+            </div>
+        </div>
+
+        <div id="page-content-wrapper" class="w-100">
+            
+            <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 shadow-sm mb-4 navbar-fixa-topo">
+                <div class="container-fluid">
+                    <div class="d-flex align-items-center">
+                        <h5 class="m-0 fw-bold text-dark d-flex align-items-center">
+                            <i class="fas fa-plus-circle text-success me-2"></i> Novo Produto
+                        </h5>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <div class="me-4 position-relative" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#modalAlertas">
+                            <i class="fas fa-bell text-muted fs-5"></i>
+                            {% if alertas %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                                {{ alertas|length }}
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="vr me-4 opacity-25"></div>
+                        
+                        <div class="d-flex align-items-center">
+                            <div class="text-end me-3 d-none d-md-block">
+                                <div class="fw-bold text-dark mb-0" style="font-size: 0.9rem;">{{ usuario.username }}</div>
+                                <div class="text-muted small" style="font-size: 0.75rem;">{{ usuario.nivel|upper }}</div>
+                            </div>
+                            <img src="/static/uploads/{{ usuario.foto if usuario.foto else 'default.png' }}" class="rounded-circle border border-2 border-white shadow-sm" width="40" height="40" style="object-fit: cover;">
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="container-fluid px-4 flex-grow-1 mb-4">
+                <div class="row justify-content-center align-items-center h-100" style="min-height: 75vh;">
+                    <div class="col-xl-6 col-lg-8">
+                        <div class="card border-0 shadow-sm" style="border-radius: 15px;">
+                            <div class="card-body p-5">
+                                <h4 class="card-title fw-bold mb-4 d-flex align-items-center text-dark">
+                                    <i class="fas fa-layer-group text-success me-2"></i> Adicionar Novo Insumo ao Estoque
+                                </h4>
+                        
+                                <hr class="text-muted opacity-25 mb-4">
+                                
+                                <form action="/adicionar_insumo" method="POST">
+                                    <div class="mb-4">
+                                        <label class="form-label text-muted small fw-bold">NOME DO ITEM</label>
+                                        <input type="text" name="nome" class="form-control bg-light border-0 py-2.5" placeholder="Ex: Bolo de Chocolate" style="border-radius: 10px;" required>
+                                    </div>
+                                    
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-6">
+                                            <label class="form-label text-muted small fw-bold">QUANTIDADE INICIAL</label>
+                                            <input type="number" step="0.1" name="quantidade" class="form-control bg-light border-0 py-2.5" placeholder="0.0" style="border-radius: 10px;" required>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label text-muted small fw-bold">QUANTIDADE MÍNIMA</label>
+                                            <input type="number" step="0.1" name="minimo" class="form-control bg-light border-0 py-2.5" placeholder="0.0" style="border-radius: 10px;" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label class="form-label text-muted small fw-bold">UNIDADE DE MEDIDA</label>
+                                        <select name="unidade" class="form-select bg-light border-0 py-2.5" style="border-radius: 10px;">
+                                            <option value="kg">Quilos (kg)</option>
+                                            <option value="un">Unidades (un)</option>
+                                            <option value="lt">Litros (lt)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-5">
+                                        <label class="form-label text-muted small fw-bold">OBSERVAÇÃO / DESCRIÇÃO (OPCIONAL)</label>
+                                        <textarea name="observacao" class="form-control bg-light border-0 py-2.5" rows="2" placeholder="Ex: Insumo comprado com o fornecedor X ou detalhes adicionais..." style="border-radius: 10px; resize: none;"></textarea>
+                                    </div>
+                                    
+                                    <div class="d-flex gap-3">
+                                        <a href="/" class="btn btn-light w-50 fw-bold py-2.5 shadow-sm" style="border-radius: 10px; border: 1px solid #e3e6f0;">CANCELAR</a>
+                                        <button type="submit" class="btn btn-success w-50 fw-bold py-2.5 shadow-sm" style="border-radius: 10px;">
+                                            <i class="fas fa-save me-2"></i>SALVAR NO ESTOQUE
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalAlertas" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+                <div class="modal-header bg-danger text-white border-0 py-3" style="border-top-left-radius: 15px; border-top-right-radius: 15px;">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Alertas de Estoque</h5>
+                    <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    {% if alertas %}
+                        <div class="list-group list-group-flush">
+                            {% for alerta in alertas %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center py-3 px-4">
+                                <div>
+                                    <div class="fw-bold text-dark">{{ alerta.nome }}</div>
+                                    <small class="text-danger fw-semibold">Abaixo do mínimo: {{ alerta.quantidade_minima }}</small>
+                                </div>
+                                <span class="badge bg-danger rounded-pill px-3 py-2">{{ alerta.quantidade_atual }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle text-success fs-1 mb-3"></i>
+                            <p class="text-muted mb-0 fw-semibold">Estoque totalmente em dia!</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer border-0 p-3">
+                    <button type="button" class="btn btn-light w-100 fw-bold py-2" data-bs-dismiss="modal" style="border-radius: 10px;">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <div id="flask-flash-messages" style="display: none;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-data" data-category="{{ category }}" data-message="{{ message }}"></div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+    </div>
+
+    <script>
+        // Leitura limpa dos dados para disparar os alertas profissionais com SweetAlert2
+        const flashElements = document.querySelectorAll('.flash-data');
+        flashElements.forEach((element) => {
+            const category = element.getAttribute('data-category');
+            const message = element.getAttribute('data-message');
+            
+            let iconType = 'success';
+            let titleText = 'Sucesso!';
+            let buttonColor = '#198754'; // Verde oficial para sucesso
+            
+            if (category === 'warning' || category === 'danger') {
+                iconType = 'error';
+                titleText = 'Atenção!';
+                buttonColor = '#dc3545'; // Vermelho para erro
+            }
+
+            Swal.fire({
+                title: titleText,
+                text: message,
+                icon: iconType,
+                confirmButtonColor: buttonColor,
+                confirmButtonText: 'Entendido',
+                borderRadius: '15px',
+                customClass: {
+                    popup: 'border-0 shadow-lg'
+                }
+            });
+        });
+    </script>
+</body>
+</html>

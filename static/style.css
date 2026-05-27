@@ -488,3 +488,14 @@ html, body {
     right: -2px;
     box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
 }
+
+/* Efeito de crescimento suave no botão da lixeira */
+.btn-excluir {
+    display: inline-block;
+    transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.btn-excluir:hover {
+    color: #b21f2d !important; /* Muda para um vermelho um pouco mais escuro e vivo */
+    transform: scale(1.25);    /* Aumenta o tamanho do ícone em 25% */
+}

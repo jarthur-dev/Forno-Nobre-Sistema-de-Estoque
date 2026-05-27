@@ -25,22 +25,27 @@ O **Forno Nobre** é uma aplicação web desenvolvida para facilitar o controle 
 1. Clone o repositório:
 git clone https://github.com/jadevbuilds/Forno-Nobre-Sistema-de-Estoque.git
 
-## 📸 Demonstração Visual
-
-Abaixo, algumas capturas de tela do sistema em funcionamento:
+## 📸 Visual da Aplicação
 
 ### 🔐 Tela de Acesso (Login)
-Interface limpa e segura para autenticação de usuários, diferenciando acessos entre Administradores e Funcionários.
-![Login](Screenshots/LoginPage.jpeg)
+*Interface limpa e segura para autenticação de usuários, diferenciando acessos entre Administradores e Funcionários.*
+![Login](static/img/readme/login_page.jpeg)
+
+*Interface limpa e segura para a criação de um novo usuário no sistema.*
+![Cadastro](static/img/readme/cadastro_page.jpeg)
 
 ### 📦 Controle de Estoque
-Visualização completa dos insumos, unidades de medida e alertas de estoque crítico.
-![Estoque](Screenshots/StockPage.jpeg)
+*Visualização completa com gráficos volumétricos integrados, listagem de insumos, fluxo rápido de movimentação (entrada/saída) e botões de ação dinâmica.*
+![Estoque Atual](static/img/readme/estoque_atual.jpeg)
+
+### ✏️ Cadastro de Insumos
+*Modal moderno integrado para cadastrar um novo insumo ao sistema Forno Nobre.*
+![Editar Insumo](static/img/readme/cadastro_insumo.jpeg)
 
 ### 👤 Perfil e Notificações Administrativas
-Área personalizada onde o Administrador visualiza notificações de solicitações pendentes em tempo real.
-![Perfil](Screenshots/MyProfile.jpeg)
+*Área personalizada onde o Administrador visualiza notificações de solicitações pendentes e gerencia seus dados.*
+![Perfil](static/img/readme/perfil_page.jpeg)
 
 ### 📝 Histórico de Movimentações
-Registro detalhado de todas as operações realizadas, garantindo a auditoria do estoque.
-![Histórico](Screenshots/HistoryPage.jpeg)
+*Registro detalhado de todas as operações realizadas, garantindo a auditoria completa do estoque.*
+![Histórico](static/img/readme/historico_page.jpeg)
