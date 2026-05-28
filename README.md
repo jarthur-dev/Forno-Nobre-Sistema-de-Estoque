@@ -29,23 +29,23 @@ git clone https://github.com/jadevbuilds/Forno-Nobre-Sistema-de-Estoque.git
 
 ### 🔐 Tela de Acesso (Login)
 *Interface limpa e segura para autenticação de usuários, diferenciando acessos entre Administradores e Funcionários.*
-![Login](Screenshots/readme/login_page.jpeg)
+![Login](Screenshots/login_page.jpeg)
 
 *Interface limpa e segura para a criação de um novo usuário no sistema.*
-![Cadastro](Screenshots/readme/cadastro_page.jpeg)
+![Cadastro](Screenshots/cadastro_page.jpeg)
 
 ### 📦 Controle de Estoque
 *Visualização completa com gráficos volumétricos integrados, listagem de insumos, fluxo rápido de movimentação (entrada/saída) e botões de ação dinâmica.*
-![Estoque Atual](Screenshots/readme/estoque_atual.jpeg)
+![Estoque Atual](Screenshots/estoque_atual.jpeg)
 
 ### ✏️ Cadastro de Insumos
 *Modal moderno integrado para cadastrar um novo insumo ao sistema Forno Nobre.*
-![Cadastrar Insumo](Screenshots/readme/cadastro_insumo.jpeg)
+![Cadastrar Insumo](Screenshots/cadastro_insumo.jpeg)
 
 ### 👤 Perfil e Notificações Administrativas
 *Área personalizada onde o Administrador visualiza notificações de solicitações pendentes e gerencia seus dados.*
-![Perfil](Screenshots/readme/perfil_page.jpeg)
+![Perfil](Screenshots/perfil_page.jpeg)
 
 ### 📝 Histórico de Movimentações
 *Registro detalhado de todas as operações realizadas, garantindo a auditoria completa do estoque.*
-![Histórico](Screenshots/readme/historico_page.jpeg)
+![Histórico](Screenshots/historico_page.jpeg)
